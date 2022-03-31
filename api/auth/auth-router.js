@@ -2,12 +2,12 @@ const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../secrets"); // use this secret!
+const User = require("../users/users-model");
 const {
   validateInput,
   checkIfUsernameFree,
   checkIfUsernameExists,
 } = require("../middleware/restricted");
-const User = require("../users/users-model");
 
 router.post(
   "/register",

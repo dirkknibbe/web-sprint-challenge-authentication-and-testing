@@ -23,7 +23,7 @@ const validateInput = (req, res, next) => {
 
   if (!user.username || user.username.trim() === "") {
     res.status(422).json({ message: "username and password required" });
-  } else if (!user.password) {
+  } else if (!user.password || user.password.trim() === "") {
     res.status(422).json({ message: "username and password required" });
   } else {
     next();
