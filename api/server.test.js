@@ -16,11 +16,11 @@ afterAll(async () => {
   await db.destroy();
 });
 
-test("sanity", () => {
+test("[1] sanity", () => {
   expect(true).toBe(true);
 });
 describe("[POST] /api/auth/register", () => {
-  test("[1] Has the correct status and message on missing registration info", async () => {
+  test("[2] Has the correct status and message on missing registration info", async () => {
     let res = await request(server)
       .post("/api/auth/register")
       .send({ password: "1234" });
@@ -32,17 +32,19 @@ describe("[POST] /api/auth/register", () => {
     expect(res.body.message).toMatch(/username and password required/i);
     expect(res.status).toBe(422);
   });
-  test("[2] Saves the user with a bcrypted password instead of plain text", async () => {
+  test("[3] Saves the user with a bcrypted password instead of plain text", async () => {
     await request(server)
       .post("/api/auth/register")
       .send({ username: "doopy", password: "1234" });
     const doopy = await db("users").where("username", "doopy").first();
     expect(bcrypt.compareSync("1234", doopy.password)).toBeTruthy();
   });
-  test("[3] Has the correct user object structure", async () => {
+  test("[4] Has the correct user object structure", async () => {
+    // register the user
     const res = await request(server)
       .post("/api/auth/register")
       .send({ username: "doopy", password: "1234" });
+    // examine the response body
     const doopy = await db("users").where("username", "doopy").first();
     expect(res.body).toMatchObject({
       id: 1,
@@ -52,19 +54,21 @@ describe("[POST] /api/auth/register", () => {
   });
 });
 describe("[POST] /api/auth/login", () => {
-  test("[4] Has the correct messages on missing username or password", async () => {
+  test("[5] Has the correct messages on missing username or password", async () => {
+    // no username
     let res = await request(server)
       .post("/api/auth/login")
       .send({ password: "1234" });
     expect(res.body.message).toMatch(/username and password required/i);
     expect(res.status).toBe(422);
+    // no password
     res = await request(server)
       .post("/api/auth/login")
       .send({ username: "doopy" });
     expect(res.body.message).toMatch(/username and password required/i);
     expect(res.status).toBe(422);
   });
-  test("[5] Has a token with correct structure: { subject, username, iat, exp }", async () => {
+  test("[6] Has a token with correct structure: { subject, username, iat, exp }", async () => {
     //register doopy
     await request(server)
       .post("/api/auth/register")
@@ -86,7 +90,7 @@ describe("[POST] /api/auth/login", () => {
   });
 });
 describe("[GET] /api/jokes", () => {
-  test("[6] Requests with a valid token obtain the jokes", async () => {
+  test("[7] Requests with a valid token obtain the jokes", async () => {
     //register the user
     await request(server)
       .post("/api/auth/register")
@@ -115,5 +119,10 @@ describe("[GET] /api/jokes", () => {
         joke: "Why didn't the skeleton cross the road? Because he had no guts.",
       },
     ]);
+  });
+  test("[8] Requests without a token are bounced with proper status and message", async () => {
+    let res = await request(server).get("/api/jokes");
+    expect(res.body.message).toMatch(/token required/i);
+    expect(res.status).toBe(401);
   });
 });
